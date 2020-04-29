@@ -520,7 +520,7 @@ main() {
   local create_prefix_rcode
 
   zget_bin_name="zget"
-  zget_version="1.0.0"
+  zget_version="1.0.1"
   zget_dl_ext="tar.gz"
   zget_base_url="https://github.com/schollz/zget/releases/download"
   prefix="${1}"

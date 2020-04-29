@@ -31,7 +31,7 @@ var flagWorkers int
 var flagCompressed, flagVerbose, flagNoClobber, flagUseTor, flagDoStat, flagVersion, flagGzip bool
 var flagList, flagOutfile string
 var flagHeaders arrayFlags
-var Version = "1.0.0"
+var Version = "v1.0.1-ffa5687"
 
 var hpool *httppool.HTTPPool
 
