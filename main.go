@@ -21,7 +21,9 @@ import (
 	"github.com/schollz/httppool"
 	log "github.com/schollz/logger"
 	"github.com/schollz/progressbar/v3"
+	"github.com/schollz/zget/src/httpstat"
 	"github.com/schollz/zget/src/torrent"
+	"github.com/schollz/zget/src/utils"
 )
 
 var flagWorkers int
@@ -91,7 +93,7 @@ func run() (err error) {
 	}
 
 	if flagDoStat {
-		visit(parseURL(flag.Args()[0]))
+		httpstat.Run(utils.ParseURL(flag.Args()[0]), httpHeaders)
 		os.Exit(0)
 	}
 	hpool = httppool.New(
@@ -149,7 +151,7 @@ func downloadfromfile(fname string) (err error) {
 }
 
 func download(u string, justone bool) (err error) {
-	uparsed := parseURL(u)
+	uparsed := utils.ParseURL(u)
 	u = uparsed.String()
 	fpath := path.Join(uparsed.Host, uparsed.Path)
 	if strings.HasSuffix(u, "/") {

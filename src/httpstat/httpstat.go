@@ -17,7 +17,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package main
+package httpstat
 
 import (
 	"context"
@@ -82,7 +82,8 @@ var (
 	// number of redirects followed
 	redirectsFollowed int
 
-	version = "devel" // for -v flag, updated during the release process with -ldflags=-X=main.version=...
+	version     = "devel" // for -v flag, updated during the release process with -ldflags=-X=main.version=...
+	httpHeaders map[string]string
 )
 
 const maxRedirects = 10
@@ -134,25 +135,6 @@ func readClientCert(filename string) []tls.Certificate {
 	return []tls.Certificate{cert}
 }
 
-func parseURL(uri string) *url.URL {
-	if !strings.Contains(uri, "://") && !strings.HasPrefix(uri, "//") {
-		uri = "//" + uri
-	}
-
-	url, err := url.Parse(uri)
-	if err != nil {
-		log.Fatalf("could not parse url %q: %v", uri, err)
-	}
-
-	if url.Scheme == "" {
-		url.Scheme = "http"
-		if !strings.HasSuffix(url.Host, ":80") {
-			url.Scheme += "s"
-		}
-	}
-	return url
-}
-
 func headerKeyValue(h string) (string, string) {
 	i := strings.Index(h, ":")
 	if i == -1 {
@@ -173,7 +155,8 @@ func dialContext(network string) func(ctx context.Context, network, addr string)
 
 // visit visits a url and times the interaction.
 // If the response is a 30x, visit follows the redirect.
-func visit(url *url.URL) {
+func Run(url *url.URL, httpHeadersArg map[string]string) {
+	httpHeaders = httpHeadersArg
 	req := newRequest(httpMethod, url, postBody)
 
 	var t0, t1, t2, t3, t4, t5, t6 time.Time
@@ -335,7 +318,7 @@ func visit(url *url.URL) {
 			log.Fatalf("maximum number of redirects (%d) followed", maxRedirects)
 		}
 
-		visit(loc)
+		Run(loc, httpHeaders)
 	}
 }
 
