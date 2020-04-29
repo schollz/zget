@@ -24,10 +24,10 @@ import (
 )
 
 var flagWorkers int
-var flagCompressed, flagVerbose, flagNoClobber, flagUseTor, flagDoStat bool
-var flagList string
+var flagCompressed, flagVerbose, flagNoClobber, flagUseTor, flagDoStat, flagVersion bool
+var flagList, flagOutfile string
 var flagHeaders arrayFlags
-var Version string
+var Version = "v1.0.0"
 
 type arrayFlags []string
 
@@ -45,10 +45,12 @@ var hpool *httppool.HTTPPool
 func init() {
 	flag.BoolVar(&flagCompressed, "compressed", false, "whether to request compressed resources")
 	flag.BoolVar(&flagVerbose, "v", false, "verbose")
+	flag.BoolVar(&flagVersion, "version", false, "print version")
 	flag.BoolVar(&flagNoClobber, "nc", false, "no clobber")
 	flag.BoolVar(&flagUseTor, "tor", false, "use tor")
 	flag.BoolVar(&flagDoStat, "stat", false, "stat")
 	flag.StringVar(&flagList, "i", "", "list of urls")
+	flag.StringVar(&flagOutfile, "o", "", "filename to write to")
 	flag.IntVar(&flagWorkers, "w", 1, "number of workers")
 	flag.Var(&flagHeaders, "H", "set headers")
 }
@@ -66,6 +68,10 @@ func main() {
 var httpHeaders map[string]string
 
 func run() (err error) {
+	if flagVersion {
+		fmt.Printf("zget %s\n", Version)
+		return
+	}
 	if strings.HasPrefix(flag.Args()[0], "magnet") || strings.HasSuffix(flag.Args()[0], ".torrent") {
 		return torrent.Download(flag.Args()[0])
 	}
@@ -154,19 +160,24 @@ func download(u string, justone bool) (err error) {
 	}
 	log.Debugf("fpath: %s", fpath)
 
-	stat, err := os.Stat(fpath)
-	if err == nil {
-		if flagNoClobber {
-			log.Debugf("already have %s", fpath)
-			return
-		} else if stat.IsDir() {
-			err = fmt.Errorf("'%s' is directory: can't overwrite", fpath)
-			return
-		} else if !stat.IsDir() {
-			for addNum := 1; addNum < 1000000; addNum++ {
-				if _, errStat := os.Stat(fmt.Sprintf("%s.%d", fpath, addNum)); errStat != nil {
-					fpath = fmt.Sprintf("%s.%d", fpath, addNum)
-					break
+	if flagOutfile != "" {
+		fpath = flagOutfile
+	} else {
+		var stat os.FileInfo
+		stat, err = os.Stat(fpath)
+		if err == nil {
+			if flagNoClobber {
+				log.Debugf("already have %s", fpath)
+				return
+			} else if stat.IsDir() {
+				err = fmt.Errorf("'%s' is directory: can't overwrite", fpath)
+				return
+			} else if !stat.IsDir() {
+				for addNum := 1; addNum < 1000000; addNum++ {
+					if _, errStat := os.Stat(fmt.Sprintf("%s.%d", fpath, addNum)); errStat != nil {
+						fpath = fmt.Sprintf("%s.%d", fpath, addNum)
+						break
+					}
 				}
 			}
 		}
