@@ -20,6 +20,7 @@ import (
 	"github.com/schollz/httppool"
 	log "github.com/schollz/logger"
 	"github.com/schollz/progressbar/v3"
+	"github.com/schollz/zget/src/torrent"
 )
 
 var flagWorkers int
@@ -65,6 +66,9 @@ func main() {
 var httpHeaders map[string]string
 
 func run() (err error) {
+	if strings.HasPrefix(flag.Args()[0], "magnet") || strings.HasSuffix(flag.Args()[0], ".torrent") {
+		return torrent.Download(flag.Args()[0])
+	}
 	if flagUseTor && runtime.GOOS == "windows" {
 		err = fmt.Errorf("tor not supported on windows")
 		return
