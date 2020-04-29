@@ -16,7 +16,7 @@ Features that I've added:
 - [x] Allows using tor with `-tor` flag.
 - [ ] Write compressed version to disk with `--gzip` flag
 - [ ] Strip out style tags and/or script tags with `--strip-scripts` flag
-- [ ] Support to download magnet links 
+- [x] Support to download magnet links 
 
 # License 
 

@@ -27,7 +27,7 @@ var flagWorkers int
 var flagCompressed, flagVerbose, flagNoClobber, flagUseTor, flagDoStat, flagVersion bool
 var flagList, flagOutfile string
 var flagHeaders arrayFlags
-var Version = "v1.0.0"
+var Version = "1.0.0"
 
 type arrayFlags []string
 
@@ -69,7 +69,7 @@ var httpHeaders map[string]string
 
 func run() (err error) {
 	if flagVersion {
-		fmt.Printf("zget %s\n", Version)
+		fmt.Printf("zget v%s\n", Version)
 		return
 	}
 	if strings.HasPrefix(flag.Args()[0], "magnet") || strings.HasSuffix(flag.Args()[0], ".torrent") {

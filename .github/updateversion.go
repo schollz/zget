@@ -27,6 +27,10 @@ func run() (err error) {
 	versionHashNew := strings.TrimSpace(string(versionHash))
 	fmt.Println(versionNew)
 	fmt.Println(versionHashNew)
+	err = replaceInFile("main.go", `Version = "`, `"`, versionNew+"-"+versionHashNew)
+	if err == nil {
+		fmt.Printf("updated main.go to version %s\n", versionNew)
+	}
 
 	err = replaceInFile("README.md", `version-`, `-b`, strings.Split(versionNew, "-")[0])
 	if err == nil {
