@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 
@@ -32,34 +33,71 @@ var flagList, flagOutfile string
 var flagHeaders arrayFlags
 var Version = "1.0.0"
 
-type arrayFlags []string
-
-func (i *arrayFlags) String() string {
-	return ""
-}
-
-func (i *arrayFlags) Set(value string) error {
-	*i = append(*i, value)
-	return nil
-}
-
 var hpool *httppool.HTTPPool
 
 func init() {
-	flag.BoolVar(&flagCompressed, "compressed", false, "whether to request compressed resources")
-	flag.BoolVar(&flagVerbose, "v", false, "verbose")
-	flag.BoolVar(&flagVersion, "version", false, "print version")
-	flag.BoolVar(&flagGzip, "gzip", false, "gzip downloads")
-	flag.BoolVar(&flagNoClobber, "nc", false, "no clobber")
-	flag.BoolVar(&flagUseTor, "tor", false, "use tor")
-	flag.BoolVar(&flagDoStat, "stat", false, "stat")
-	flag.StringVar(&flagList, "i", "", "list of urls")
-	flag.StringVar(&flagOutfile, "o", "", "filename to write to")
-	flag.IntVar(&flagWorkers, "w", 1, "number of workers")
-	flag.Var(&flagHeaders, "H", "set headers")
+	flag.BoolVar(&flagCompressed, "compressed", false, "Request compressed response")
+	flag.BoolVar(&flagVerbose, "v", false, "Verbosity mode")
+	flag.BoolVar(&flagVersion, "version", false, "Print version")
+	flag.BoolVar(&flagGzip, "gzip", false, "Download to gzipped file")
+	flag.BoolVar(&flagNoClobber, "nc", false, "Skip downloads that are already retrieved")
+	flag.BoolVar(&flagUseTor, "tor", false, "Use Tor proxy when downloading")
+	flag.BoolVar(&flagDoStat, "stat", false, "Visualize curl statistics")
+	flag.StringVar(&flagList, "i", "", "Download from a list of URLs")
+	flag.StringVar(&flagOutfile, "o", "", "Filename to write download ")
+	flag.IntVar(&flagWorkers, "w", 1, "Specify the number of workers")
+	flag.Var(&flagHeaders, "H", "Pass custom header(s) to server")
 }
 
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, `zget - like wget, but customized for zack
+
+USAGE:
+	Download a webpage:
+		zget -o nytimes.html nytimes.com
+
+	Download a torrent:
+		zget "magent:?...."
+		zget "https://releases.ubuntu.com/.../ubuntu.torrent"
+
+	Download a list of webpages, ignoring already downloaded:
+		zget -nc -i urls.txt
+
+VERSION:
+	v`+Version+`
+
+OPTIONS:
+`)
+		flag.VisitAll(func(f *flag.Flag) {
+			s := fmt.Sprintf("  -%s", f.Name) // Two spaces before -; see next two comments.
+			name, usage := flag.UnquoteUsage(f)
+			if len(name) > 0 {
+				s += " " + name
+			}
+
+			// Boolean flags of one ASCII letter are so common we
+			// treat them specially, putting their usage on the same line.
+			if len(s) <= 7 { // space, space, '-', 'x'.
+				s += "\t\t"
+			} else {
+				// Four spaces before the tab triggers good alignment
+				// for both 4- and 8-space tab stops.
+				s += "\t"
+			}
+
+			s += strings.ReplaceAll(usage, "\n", "    \t")
+			if !isZeroValue(f, f.DefValue) {
+				if _, ok := f.Value.(*stringValue); ok {
+					// put quotes on the value
+					s += fmt.Sprintf(" (default %q)", f.DefValue)
+				} else {
+					s += fmt.Sprintf(" (default %v)", f.DefValue)
+				}
+			}
+			fmt.Fprint(os.Stderr, s, "\n")
+		})
+	}
 	flag.Parse()
 	log.SetOutput(os.Stderr)
 	err := run()
@@ -264,4 +302,48 @@ func lineCounter(r io.Reader) (int, error) {
 			return count, err
 		}
 	}
+}
+
+// isZeroValue determines whether the string represents the zero
+// value for a flag.
+func isZeroValue(f *flag.Flag, value string) bool {
+	// Build a zero value of the flag's Value type, and see if the
+	// result of calling its String method equals the value passed in.
+	// This works unless the Value type is itself an interface type.
+	typ := reflect.TypeOf(f.Value)
+	var z reflect.Value
+	if typ.Kind() == reflect.Ptr {
+		z = reflect.New(typ.Elem())
+	} else {
+		z = reflect.Zero(typ)
+	}
+	return value == z.Interface().(flag.Value).String()
+}
+
+// -- string Value
+type stringValue string
+
+func newStringValue(val string, p *string) *stringValue {
+	*p = val
+	return (*stringValue)(p)
+}
+
+func (s *stringValue) Set(val string) error {
+	*s = stringValue(val)
+	return nil
+}
+
+func (s *stringValue) Get() interface{} { return string(*s) }
+
+func (s *stringValue) String() string { return string(*s) }
+
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return ""
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
 }
