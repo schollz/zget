@@ -1,6 +1,5 @@
 project_name: zget
 build:
-  main: main.go
   binary: zget
   ldflags: -s -w -X main.Version="v{{.Version}}-{{.Date}}"
   env:
