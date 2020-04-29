@@ -41,16 +41,16 @@ func torrentBar(t *torrent.Torrent) {
 			}
 			completedBytes := t.BytesCompleted()
 			bar.Add64(completedBytes - previousCompleted)
-			previousCompleted -= completedBytes
-			// fmt.Printf(
-			// 	"downloading %q: %s/%s, %d/%d pieces completed (%d partial)\n",
-			// 	t.Name(),
-			// 	humanize.Bytes(uint64(t.BytesCompleted())),
-			// 	humanize.Bytes(uint64(t.Length())),
-			// 	completedPieces,
-			// 	t.NumPieces(),
-			// 	partialPieces,
-			// )
+			previousCompleted = completedBytes
+			//fmt.Printf(
+			//	"downloading %q: %s/%s, %d/%d pieces completed (%d partial)\n",
+			//	t.Name(),
+			//	humanize.Bytes(uint64(t.BytesCompleted())),
+			//	humanize.Bytes(uint64(t.Length())),
+			//	completedPieces,
+			//	t.NumPieces(),
+			//	partialPieces,
+			//)
 			time.Sleep(time.Second)
 		}
 	}()
