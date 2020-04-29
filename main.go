@@ -1,5 +1,10 @@
 package main
 
+//go:generate git tag -af v$VERSION -m "v$VERSION"
+//go:generate go run .github/updateversion.go
+//go:generate git commit -am "bump $VERSION"
+//go:generate git tag -af v$VERSION -m "v$VERSION"
+
 import (
 	"bufio"
 	"bytes"
@@ -21,6 +26,7 @@ var flagWorkers int
 var flagCompressed, flagVerbose, flagNoClobber, flagUseTor, flagDoStat bool
 var flagList string
 var flagHeaders arrayFlags
+var Version string
 
 type arrayFlags []string
 
