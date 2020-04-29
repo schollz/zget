@@ -155,13 +155,21 @@ func download(u string, justone bool) (err error) {
 	log.Debugf("fpath: %s", fpath)
 
 	stat, err := os.Stat(fpath)
-	if err == nil && flagNoClobber {
-		log.Debugf("already have %s", fpath)
-		return
-	}
-	if err == nil && stat.IsDir() {
-		err = fmt.Errorf("'%s' is directory: can't overwrite", fpath)
-		return
+	if err == nil {
+		if flagNoClobber {
+			log.Debugf("already have %s", fpath)
+			return
+		} else if stat.IsDir() {
+			err = fmt.Errorf("'%s' is directory: can't overwrite", fpath)
+			return
+		} else if !stat.IsDir() {
+			for addNum := 1; addNum < 1000000; addNum++ {
+				if _, errStat := os.Stat(fmt.Sprintf("%s.%d", fpath, addNum)); errStat != nil {
+					fpath = fmt.Sprintf("%s.%d", fpath, addNum)
+					break
+				}
+			}
+		}
 	}
 
 	log.Debugf("saving to %s", fpath)
