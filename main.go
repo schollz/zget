@@ -8,6 +8,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"compress/gzip"
 	"flag"
 	"fmt"
 	"io"
@@ -24,7 +25,7 @@ import (
 )
 
 var flagWorkers int
-var flagCompressed, flagVerbose, flagNoClobber, flagUseTor, flagDoStat, flagVersion bool
+var flagCompressed, flagVerbose, flagNoClobber, flagUseTor, flagDoStat, flagVersion, flagGzip bool
 var flagList, flagOutfile string
 var flagHeaders arrayFlags
 var Version = "1.0.0"
@@ -46,6 +47,7 @@ func init() {
 	flag.BoolVar(&flagCompressed, "compressed", false, "whether to request compressed resources")
 	flag.BoolVar(&flagVerbose, "v", false, "verbose")
 	flag.BoolVar(&flagVersion, "version", false, "print version")
+	flag.BoolVar(&flagGzip, "gzip", false, "gzip downloads")
 	flag.BoolVar(&flagNoClobber, "nc", false, "no clobber")
 	flag.BoolVar(&flagUseTor, "tor", false, "use tor")
 	flag.BoolVar(&flagDoStat, "stat", false, "stat")
@@ -182,6 +184,9 @@ func download(u string, justone bool) (err error) {
 			}
 		}
 	}
+	if flagGzip {
+		fpath += ".gz"
+	}
 
 	log.Debugf("saving to %s", fpath)
 	resp, err := hpool.Get(u)
@@ -194,13 +199,13 @@ func download(u string, justone bool) (err error) {
 	log.Debugf("foldername: %s", foldername)
 	os.MkdirAll(foldername, 0755)
 
-	var out io.Writer
 	f, err := os.OpenFile(fpath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return
 	}
-	out = f
 	defer f.Close()
+
+	var writers []io.Writer
 
 	var bar *progressbar.ProgressBar
 	if justone {
@@ -212,12 +217,22 @@ func download(u string, justone bool) (err error) {
 			progressbar.OptionOnCompletion(func() { fmt.Println(" ") }),
 			progressbar.OptionSetWidth(10),
 		)
-		out = io.MultiWriter(out, bar)
 		defer func() {
 			bar.Finish()
 		}()
+		writers = append(writers, bar)
 	}
-	_, err = io.Copy(out, resp.Body)
+	if flagGzip {
+		buf := bufio.NewWriter(f)
+		defer buf.Flush()
+		gz := gzip.NewWriter(buf)
+		defer gz.Close()
+		writers = append(writers, gz)
+	} else {
+		writers = append(writers, f)
+	}
+	dest := io.MultiWriter(writers...)
+	_, err = io.Copy(dest, resp.Body)
 	return
 }
 

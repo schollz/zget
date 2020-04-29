@@ -14,7 +14,7 @@ Features that I've added:
 
 - [x] Allows multiple workers with `-w` flag.
 - [x] Allows using tor with `-tor` flag.
-- [ ] Write compressed version to disk with `--gzip` flag
+- [x] Write compressed version to disk with `--gzip` flag
 - [ ] Strip out style tags and/or script tags with `--strip-scripts` flag
 - [x] Support to download magnet links 
 
