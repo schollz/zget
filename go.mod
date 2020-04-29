@@ -20,9 +20,7 @@ require (
 	github.com/schollz/logger v1.2.0
 	github.com/schollz/progressbar/v3 v3.1.1
 	github.com/stretchr/testify v1.4.0
-	github.com/tdewolff/minify v2.3.6+incompatible
 	github.com/tdewolff/minify/v2 v2.7.4
-	github.com/tdewolff/parse v2.3.4+incompatible // indirect
 	github.com/tinylib/msgp v1.1.2 // indirect
 	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79 // indirect
 	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0
