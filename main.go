@@ -152,6 +152,7 @@ func run() (err error) {
 		httppool.OptionUseTor(flagUseTor),
 		httppool.OptionHeaders(httpHeaders),
 	)
+	defer hpool.Close()
 	if flagVerbose {
 		log.SetLevel("debug")
 	}
