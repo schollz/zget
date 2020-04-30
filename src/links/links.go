@@ -1,7 +1,9 @@
 package links
 
 import (
-	"os"
+	"bytes"
+	"io/ioutil"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/schollz/logger"
@@ -9,14 +11,13 @@ import (
 )
 
 // FromFile retrieves, parses, and validates all links for given host
-func FromFile(fname string, host string) (links []string, err error) {
-	f, err := os.Open(fname)
+func FromFile(fname string, host string, rewrite bool) (links []string, err error) {
+	b, err := ioutil.ReadFile(fname)
 	if err != nil {
 		return
 	}
-	defer f.Close()
 
-	doc, err := goquery.NewDocumentFromReader(f)
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(b))
 	if err != nil {
 		return
 	}
@@ -38,6 +39,7 @@ func FromFile(fname string, host string) (links []string, err error) {
 		}
 		if u.Host == uhost.Host {
 			links = append(links, u.String())
+			s.SetAttr("href", strings.TrimPrefix(u.String(), uhost.Scheme+"://"+uhost.Host))
 		}
 	})
 
@@ -53,6 +55,8 @@ func FromFile(fname string, host string) (links []string, err error) {
 		}
 		if u.Host == uhost.Host {
 			links = append(links, u.String())
+			s.SetAttr("src", strings.TrimPrefix(u.String(), uhost.Scheme+"://"+uhost.Host))
+
 		}
 	})
 
@@ -68,6 +72,7 @@ func FromFile(fname string, host string) (links []string, err error) {
 		}
 		if u.Host == uhost.Host {
 			links = append(links, u.String())
+			s.SetAttr("src", strings.TrimPrefix(u.String(), uhost.Scheme+"://"+uhost.Host))
 		}
 	})
 
@@ -83,8 +88,17 @@ func FromFile(fname string, host string) (links []string, err error) {
 		}
 		if u.Host == uhost.Host {
 			links = append(links, u.String())
+			s.SetAttr("href", strings.TrimPrefix(u.String(), uhost.Scheme+"://"+uhost.Host))
 		}
 	})
 
+	if rewrite {
+		var html string
+		html, err = doc.Html()
+		if err != nil {
+			return
+		}
+		err = ioutil.WriteFile(fname, []byte(html), 0644)
+	}
 	return
 }

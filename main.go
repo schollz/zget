@@ -180,6 +180,7 @@ func run() (err error) {
 }
 
 func downloadSite(u string) (err error) {
+	flagNoClobber = true
 	pagesToDo := make(map[string]struct{})
 	pagesDone := make(map[string]struct{})
 
@@ -210,7 +211,7 @@ func downloadSite(u string) (err error) {
 				return
 			}
 			var newlinks []string
-			newlinks, err = links.FromFile(fpath, uparsed.String())
+			newlinks, err = links.FromFile(fpath, uparsed.String(), true)
 			if err != nil {
 				return
 			}
