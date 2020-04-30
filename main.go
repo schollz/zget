@@ -66,7 +66,7 @@ USAGE:
 		zget -nc -i urls.txt
 
 VERSION:
-	v`+Version+`
+	`+Version+`
 
 OPTIONS:
 `)
@@ -112,7 +112,7 @@ var httpHeaders map[string]string
 
 func run() (err error) {
 	if flagVersion {
-		fmt.Printf("zget v%s\n", Version)
+		fmt.Printf("zget %s\n", Version)
 		return
 	}
 	if flagUseTor && runtime.GOOS == "windows" {
@@ -138,14 +138,12 @@ func run() (err error) {
 		}
 	}
 
-	log.Trace("init pool")
 	hpool = httppool.New(
 		httppool.OptionDebug(false),
 		httppool.OptionNumClients(flagWorkers),
 		httppool.OptionUseTor(flagUseTor),
 		httppool.OptionHeaders(httpHeaders),
 	)
-	log.Trace("init pool done")
 	if flagVerbose {
 		log.SetLevel("debug")
 	}
@@ -235,12 +233,10 @@ func download(u string, justone bool) (err error) {
 	}
 
 	log.Debugf("saving to %s", fpath)
-	log.Tracef("executing get")
 	resp, err := hpool.Get(u)
 	if err != nil {
 		return
 	}
-	log.Tracef("executing get done")
 	defer resp.Body.Close()
 
 	foldername, _ := filepath.Split(fpath)
