@@ -28,7 +28,7 @@ import (
 )
 
 var flagWorkers int
-var flagCompressed, flagVerbose, flagNoClobber, flagUseTor, flagDoStat, flagVersion, flagGzip bool
+var flagCompressed, flagVerbose, flagNoClobber, flagStdout, flagUseTor, flagDoStat, flagVersion, flagGzip bool
 var flagList, flagOutfile string
 var flagHeaders arrayFlags
 var Version = "v1.0.1-ffa5687"
@@ -44,7 +44,8 @@ func init() {
 	flag.BoolVar(&flagUseTor, "tor", false, "Use Tor proxy when downloading")
 	flag.BoolVar(&flagDoStat, "stat", false, "Visualize curl statistics")
 	flag.StringVar(&flagList, "i", "", "Download from a list of URLs")
-	flag.StringVar(&flagOutfile, "o", "", "Filename to write download ")
+	flag.StringVar(&flagOutfile, "o", "", "Filename to write download")
+	flag.BoolVar(&flagStdout, "O", false, "Show in stdout")
 	flag.IntVar(&flagWorkers, "w", 1, "Specify the number of workers")
 	flag.Var(&flagHeaders, "H", "Pass custom header(s) to server")
 }
@@ -137,12 +138,14 @@ func run() (err error) {
 		}
 	}
 
+	log.Trace("init pool")
 	hpool = httppool.New(
 		httppool.OptionDebug(false),
 		httppool.OptionNumClients(flagWorkers),
 		httppool.OptionUseTor(flagUseTor),
 		httppool.OptionHeaders(httpHeaders),
 	)
+	log.Trace("init pool done")
 	if flagVerbose {
 		log.SetLevel("debug")
 	}
@@ -232,10 +235,12 @@ func download(u string, justone bool) (err error) {
 	}
 
 	log.Debugf("saving to %s", fpath)
+	log.Tracef("executing get")
 	resp, err := hpool.Get(u)
 	if err != nil {
 		return
 	}
+	log.Tracef("executing get done")
 	defer resp.Body.Close()
 
 	foldername, _ := filepath.Split(fpath)
@@ -251,7 +256,7 @@ func download(u string, justone bool) (err error) {
 	var writers []io.Writer
 
 	var bar *progressbar.ProgressBar
-	if justone {
+	if justone && !flagStdout {
 		bar = progressbar.NewOptions(
 			int(resp.ContentLength),
 			progressbar.OptionSetWriter(os.Stderr),
@@ -271,6 +276,8 @@ func download(u string, justone bool) (err error) {
 		gz := gzip.NewWriter(buf)
 		defer gz.Close()
 		writers = append(writers, gz)
+	} else if flagStdout {
+		writers = append(writers, os.Stdout)
 	} else {
 		writers = append(writers, f)
 	}
