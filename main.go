@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -144,7 +145,12 @@ func run() (err error) {
 			return torrent.Download(flag.Args()[0])
 		}
 		if flagDoStat {
-			httpstat.Run(utils.ParseURL(flag.Args()[0]), httpHeaders)
+			var uparsed *url.URL
+			uparsed, err = utils.ParseURL(flag.Args()[0])
+			if err != nil {
+				return
+			}
+			httpstat.Run(uparsed, httpHeaders)
 			os.Exit(0)
 		}
 	}
@@ -211,7 +217,11 @@ func download(u string, justone bool) (err error) {
 		spin.Start()
 		defer spin.Stop()
 	}
-	uparsed := utils.ParseURL(u)
+	uparsed, err := utils.ParseURL(u)
+	if err != nil {
+		return
+	}
+
 	u = uparsed.String()
 	fpath := path.Join(uparsed.Host, uparsed.Path)
 	if strings.HasSuffix(u, "/") {
