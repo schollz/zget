@@ -1,29 +1,21 @@
 package splicer
 
 import (
-	"fmt"
-	"strings"
+	"io/ioutil"
+	"os"
 	"testing"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
-	"github.com/tdewolff/minify/v2"
-	"github.com/tdewolff/minify/v2/html"
 )
 
-func TestSplicer(t *testing.T) {
-	assert.Nil(t, try())
-
-}
-
-func try() (err error) {
-	m := minify.New()
-	m.Add("text/html", &html.Minifier{
-		KeepDefaultAttrVals: true,
-		KeepDocumentTags:    true,
-	})
-	var data = `
+var data = `
 <html>
+<head>
+<style>
+p {
+	text-size: 2em;
+}
+</style>
   <body>
   <script>
     var zodiac_content = {
@@ -47,22 +39,21 @@ func try() (err error) {
   </body>
 </html>
 `
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(data))
-	if err != nil {
-		return
-	}
 
-	doc.Find("script").ReplaceWithHtml("")
-	html, err := doc.Html()
-	if err != nil {
-		return
-	}
-	fmt.Println(html)
-	s, err := m.String("text/html", html)
-	if err != nil {
-		return
-	}
-	fmt.Println(s)
+func TestSplicer(t *testing.T) {
+	defer os.Remove("temp.html")
+	ioutil.WriteFile("temp.html", []byte(data), 0644)
+	assert.Nil(t, StripHTML("temp.html", true, true))
+	b, _ := ioutil.ReadFile("temp.html")
+	assert.Equal(t, "<html><head></head><body><strong>Hi</strong></body></html>", string(b))
 
-	return
+	ioutil.WriteFile("temp.html", []byte(data), 0644)
+	assert.Nil(t, StripHTML("temp.html", true, false))
+	b, _ = ioutil.ReadFile("temp.html")
+	assert.Equal(t, `<html><head><style>
+p {
+	text-size: 2em;
+}
+</style></head><body><strong>Hi</strong></body></html>`, string(b))
+
 }

@@ -23,12 +23,14 @@ import (
 	log "github.com/schollz/logger"
 	"github.com/schollz/progressbar/v3"
 	"github.com/schollz/zget/src/httpstat"
+	"github.com/schollz/zget/src/splicer"
 	"github.com/schollz/zget/src/torrent"
 	"github.com/schollz/zget/src/utils"
 )
 
 var flagWorkers int
 var flagCompressed, flagVerbose, flagNoClobber, flagStdout, flagUseTor, flagDoStat, flagVersion, flagGzip bool
+var flagStripScript, flagStripStyle bool
 var flagList, flagOutfile string
 var flagHeaders arrayFlags
 var Version = "v1.0.2-765dd6b"
@@ -48,30 +50,36 @@ func init() {
 	flag.BoolVar(&flagStdout, "O", false, "Show in stdout")
 	flag.IntVar(&flagWorkers, "w", 1, "Specify the number of workers")
 	flag.Var(&flagHeaders, "H", "Pass custom header(s) to server")
+	flag.BoolVar(&flagStripScript, "rm-script", false, "Remove script tags from downloaded HTML")
+	flag.BoolVar(&flagStripStyle, "rm-style", false, "Remove style tags from download HTML")
 }
 
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `zget - like wget, but customized for zack
+https://github.com/schollz/zget
 
 USAGE:
-	Download a webpage:
-		zget -o nytimes.html nytimes.com
+  Download a webpage:
+    zget -o nytimes.html nytimes.com
 
-	Download a torrent:
-		zget "magent:?...."
-		zget "https://releases.ubuntu.com/.../ubuntu.torrent"
+  Download a torrent:
+    zget "magent:?...."
+    zget "https://releases.ubuntu.com/.../ubuntu.torrent"
 
-	Download a list of webpages, ignoring already downloaded:
-		zget -nc -i urls.txt
+  Download a list of webpages, ignoring already downloaded:
+    zget -nc -i urls.txt
 
 VERSION:
-	`+Version+`
+  `+Version+`
 
 OPTIONS:
 `)
 		flag.VisitAll(func(f *flag.Flag) {
 			s := fmt.Sprintf("  -%s", f.Name) // Two spaces before -; see next two comments.
+			if len(strings.Fields(f.Name)[0]) > 1 {
+				s = fmt.Sprintf("  --%s", f.Name) // Two spaces before -; see next two comments.
+			}
 			name, usage := flag.UnquoteUsage(f)
 			if len(name) > 0 {
 				s += " " + name
@@ -247,7 +255,6 @@ func download(u string, justone bool) (err error) {
 	if err != nil {
 		return
 	}
-	defer f.Close()
 
 	var writers []io.Writer
 
@@ -279,6 +286,15 @@ func download(u string, justone bool) (err error) {
 	}
 	dest := io.MultiWriter(writers...)
 	_, err = io.Copy(dest, resp.Body)
+	f.Close()
+	if err != nil {
+		return
+	}
+
+	// post processing
+	if !flagGzip && strings.Contains(resp.Header.Get("Content-Type"), "html") {
+		splicer.StripHTML(fpath, flagStripScript, flagStripStyle)
+	}
 	return
 }
 
