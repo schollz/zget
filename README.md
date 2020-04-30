@@ -1,6 +1,6 @@
 # zget
 
-<a href="https://github.com/schollz/zget/releases/latest"><img src="https://img.shields.io/badge/version-v1.0.1-brightgreen.svg?style=flat-square" alt="Version"></a>
+<a href="https://github.com/schollz/zget/releases/latest"><img src="https://img.shields.io/badge/version-v1.0.2-brightgreen.svg?style=flat-square" alt="Version"></a>
 
 zget is basically a mashup of `curl` and `wget`. There are no real new features, but follows some things that I personally like, such as:
 
