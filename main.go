@@ -33,7 +33,7 @@ var flagCompressed, flagVerbose, flagNoClobber, flagStdout, flagUseTor, flagDoSt
 var flagStripScript, flagStripStyle bool
 var flagList, flagOutfile string
 var flagHeaders arrayFlags
-var Version = "v1.0.2-765dd6b"
+var Version = "v1.1.0-9170188"
 
 var hpool *httppool.HTTPPool
 
