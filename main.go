@@ -114,9 +114,6 @@ func run() (err error) {
 		fmt.Printf("zget v%s\n", Version)
 		return
 	}
-	if strings.HasPrefix(flag.Args()[0], "magnet") || strings.HasSuffix(flag.Args()[0], ".torrent") {
-		return torrent.Download(flag.Args()[0])
-	}
 	if flagUseTor && runtime.GOOS == "windows" {
 		err = fmt.Errorf("tor not supported on windows")
 		return
@@ -130,10 +127,16 @@ func run() (err error) {
 		httpHeaders[strings.TrimSpace(foo[0])] = strings.TrimSpace(foo[1])
 	}
 
-	if flagDoStat {
-		httpstat.Run(utils.ParseURL(flag.Args()[0]), httpHeaders)
-		os.Exit(0)
+	if len(flag.Args()) > 0 {
+		if strings.HasPrefix(flag.Args()[0], "magnet") || strings.HasSuffix(flag.Args()[0], ".torrent") {
+			return torrent.Download(flag.Args()[0])
+		}
+		if flagDoStat {
+			httpstat.Run(utils.ParseURL(flag.Args()[0]), httpHeaders)
+			os.Exit(0)
+		}
 	}
+
 	hpool = httppool.New(
 		httppool.OptionDebug(false),
 		httppool.OptionNumClients(flagWorkers),
