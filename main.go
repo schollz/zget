@@ -18,7 +18,9 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/schollz/httppool"
 	log "github.com/schollz/logger"
 	"github.com/schollz/progressbar/v3"
@@ -34,7 +36,8 @@ var flagStripScript, flagStripStyle bool
 var flagList, flagOutfile string
 var flagHeaders arrayFlags
 var Version = "v1.1.0-9170188"
-
+var showTorIP bool
+var spin *spinner.Spinner
 var hpool *httppool.HTTPPool
 
 func init() {
@@ -202,6 +205,12 @@ func downloadfromfile(fname string) (err error) {
 }
 
 func download(u string, justone bool) (err error) {
+	if justone {
+		spin = spinner.New(spinner.CharSets[24], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
+		spin.Suffix = " connecting..."
+		spin.Start()
+		defer spin.Stop()
+	}
 	uparsed := utils.ParseURL(u)
 	u = uparsed.String()
 	fpath := path.Join(uparsed.Host, uparsed.Path)
@@ -245,6 +254,16 @@ func download(u string, justone bool) (err error) {
 	resp, err := hpool.Get(u)
 	if err != nil {
 		return
+	}
+	if justone {
+		spin.Stop()
+		if !showTorIP && flagUseTor {
+			showTorIP = !showTorIP
+			ips, _ := hpool.PublicIP()
+			if len(ips) > 0 {
+				fmt.Fprintf(os.Stderr, "connected through tor as %s\n", ips[0])
+			}
+		}
 	}
 	defer resp.Body.Close()
 
