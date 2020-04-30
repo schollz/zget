@@ -205,6 +205,7 @@ func downloadSite(u string) (err error) {
 		linkstodo = linkstodo[:i]
 
 		for _, utodo := range linkstodo {
+			pagesDone[utodo] = struct{}{}
 			var fpath string
 			_, fpath, err = download(utodo, false, true)
 			if err != nil {
@@ -213,12 +214,14 @@ func downloadSite(u string) (err error) {
 			var newlinks []string
 			newlinks, err = links.FromFile(fpath, uparsed.String(), true)
 			if err != nil {
-				return
+				newlinks, err = links.FromFile(path.Join(fpath, "index.html"), uparsed.String(), true)
+				if err != nil {
+					continue
+				}
 			}
 			for _, newlink := range newlinks {
 				pagesToDo[newlink] = struct{}{}
 			}
-			pagesDone[utodo] = struct{}{}
 		}
 	}
 
