@@ -26,13 +26,14 @@ import (
 	log "github.com/schollz/logger"
 	"github.com/schollz/progressbar/v3"
 	"github.com/schollz/zget/src/httpstat"
+	"github.com/schollz/zget/src/links"
 	"github.com/schollz/zget/src/splicer"
 	"github.com/schollz/zget/src/torrent"
 	"github.com/schollz/zget/src/utils"
 )
 
 var flagWorkers int
-var flagCompressed, flagVerbose, flagNoClobber, flagStdout, flagUseTor, flagDoStat, flagVersion, flagGzip bool
+var flagCompressed, flagVerbose, flagNoClobber, flagStdout, flagUseTor, flagDoStat, flagVersion, flagGzip, flagDownloadSite bool
 var flagStripScript, flagStripStyle bool
 var flagList, flagOutfile string
 var flagHeaders arrayFlags
@@ -56,6 +57,7 @@ func init() {
 	flag.Var(&flagHeaders, "H", "Pass custom header(s) to server")
 	flag.BoolVar(&flagStripScript, "rm-script", false, "Remove script tags from downloaded HTML")
 	flag.BoolVar(&flagStripStyle, "rm-style", false, "Remove style tags from download HTML")
+	flag.BoolVar(&flagDownloadSite, "site", false, "Download entire website")
 }
 
 func main() {
@@ -168,8 +170,55 @@ func run() (err error) {
 
 	if flagList != "" {
 		err = downloadfromfile(flagList)
+	} else if flagDownloadSite {
+		err = downloadSite(flag.Args()[0])
 	} else {
-		err = download(flag.Args()[0], true)
+		_, _, err = download(flag.Args()[0], true, false)
+	}
+
+	return
+}
+
+func downloadSite(u string) (err error) {
+	pagesToDo := make(map[string]struct{})
+	pagesDone := make(map[string]struct{})
+
+	uparsed, err := utils.ParseURL(u)
+	if err != nil {
+		return
+	}
+	pagesToDo[uparsed.String()] = struct{}{}
+
+	for {
+		linkstodo := make([]string, len(pagesToDo))
+		i := 0
+		for l := range pagesToDo {
+			if _, ok := pagesDone[l]; !ok {
+				linkstodo[i] = l
+				i++
+			}
+		}
+		if i == 0 {
+			break
+		}
+		linkstodo = linkstodo[:i]
+
+		for _, utodo := range linkstodo {
+			var fpath string
+			_, fpath, err = download(utodo, false, true)
+			if err != nil {
+				return
+			}
+			var newlinks []string
+			newlinks, err = links.FromFile(fpath, uparsed.String())
+			if err != nil {
+				return
+			}
+			for _, newlink := range newlinks {
+				pagesToDo[newlink] = struct{}{}
+			}
+			pagesDone[utodo] = struct{}{}
+		}
 	}
 
 	return
@@ -200,7 +249,7 @@ func downloadfromfile(fname string) (err error) {
 		bar.Add(1)
 		u := strings.TrimSpace(scanner.Text())
 		bar.Describe(u)
-		err = download(u, false)
+		_, _, err = download(u, false, true)
 		if err != nil {
 			return
 		}
@@ -210,21 +259,21 @@ func downloadfromfile(fname string) (err error) {
 	return
 }
 
-func download(u string, justone bool) (err error) {
+func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath string, err error) {
 	if justone {
 		spin = spinner.New(spinner.CharSets[24], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
 		spin.Suffix = " connecting..."
 		spin.Start()
 		defer spin.Stop()
 	}
-	uparsed, err := utils.ParseURL(u)
+	uparsed, err := utils.ParseURL(urlInput)
 	if err != nil {
 		return
 	}
 
-	u = uparsed.String()
-	fpath := path.Join(uparsed.Host, uparsed.Path)
-	if strings.HasSuffix(u, "/") {
+	uget = uparsed.String()
+	fpath = path.Join(uparsed.Host, uparsed.Path)
+	if strings.HasSuffix(uget, "/") {
 		fpath = path.Join(fpath, "index.html")
 	}
 	log.Debugf("fpath: %s", fpath)
@@ -261,7 +310,7 @@ func download(u string, justone bool) (err error) {
 	}
 
 	log.Debugf("saving to %s", fpath)
-	resp, err := hpool.Get(u)
+	resp, err := hpool.Get(uget)
 	if err != nil {
 		return
 	}
@@ -277,6 +326,9 @@ func download(u string, justone bool) (err error) {
 	}
 	defer resp.Body.Close()
 
+	if indexhtml && strings.Contains(resp.Header.Get("Content-Type"), "html") && !strings.HasSuffix(fpath, "index.html") {
+		fpath = path.Join(fpath, "index.html")
+	}
 	foldername, _ := filepath.Split(fpath)
 	log.Debugf("foldername: %s", foldername)
 	os.MkdirAll(foldername, 0755)
@@ -321,7 +373,7 @@ func download(u string, justone bool) (err error) {
 		return
 	}
 
-	// post processing
+	// post processing`
 	if !flagGzip && strings.Contains(resp.Header.Get("Content-Type"), "html") {
 		splicer.StripHTML(fpath, flagStripScript, flagStripStyle)
 	}
