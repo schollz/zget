@@ -1,6 +1,6 @@
 # zget
 
-<a href="https://github.com/schollz/zget/releases/latest"><img src="https://img.shields.io/badge/version-v1.1.2-brightgreen.svg?style=flat-square" alt="Version"></a>
+<a href="https://github.com/schollz/zget/releases/latest"><img src="https://img.shields.io/badge/version-v1.1.3-brightgreen.svg?style=flat-square" alt="Version"></a>
 
 <p align="center"><code>curl https://getzget.schollz.com | bash</code></p>
 
