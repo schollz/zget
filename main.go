@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -229,6 +230,31 @@ func downloadSite(u string) (err error) {
 }
 
 func downloadfromfile(fname string) (err error) {
+	urlschan := make(chan string)
+	done := make(chan bool)
+	var wg sync.WaitGroup
+	wg.Add(flagWorkers)
+	for i := 0; i < flagWorkers; i++ {
+		go func() {
+			defer wg.Done()
+			log.Trace("starting worker")
+			for {
+				select {
+				case <-done:
+					log.Trace("exiting worker")
+					return
+				case u := <-urlschan:
+					_, _, err = download(u, false, true)
+					if err != nil {
+						log.Error(err)
+					}
+					log.Tracef("downloaded %s", u)
+				}
+			}
+
+		}()
+	}
+
 	numLines, err := countLinesInFile(fname)
 	if err != nil {
 		return
@@ -252,14 +278,19 @@ func downloadfromfile(fname string) (err error) {
 	for scanner.Scan() {
 		bar.Add(1)
 		u := strings.TrimSpace(scanner.Text())
-		bar.Describe(u)
-		_, _, err = download(u, false, true)
-		if err != nil {
-			return
-		}
+		urlschan <- u
+		// bar.Describe(u)
+		// _, _, err = download(u, false, true)
+		// if err != nil {
+		// 	return
+		// }
 	}
-
 	err = scanner.Err()
+
+	for i := 0; i < flagWorkers; i++ {
+		done <- true
+	}
+	wg.Wait()
 	return
 }
 
@@ -296,7 +327,7 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 			if flagNoClobber {
 				log.Debugf("already have %s", fpath)
 				return
-			} else if stat.IsDir() {
+			} else if stat.IsDir() && !indexhtml {
 				err = fmt.Errorf("'%s' is directory: can't overwrite", fpath)
 				return
 			} else if !stat.IsDir() {
@@ -313,9 +344,9 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 		fpath += ".gz"
 	}
 
-	log.Debugf("saving to %s", fpath)
 	resp, err := hpool.Get(uget)
 	if err != nil {
+		log.Trace(err)
 		return
 	}
 	if justone {
@@ -330,6 +361,7 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 	}
 	defer resp.Body.Close()
 
+	log.Tracef("Content-Type: %s", resp.Header.Get("Content-Type"))
 	if indexhtml && strings.Contains(resp.Header.Get("Content-Type"), "html") && !strings.HasSuffix(fpath, "index.html") {
 		fpath = path.Join(fpath, "index.html")
 	}
@@ -337,6 +369,7 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 	log.Debugf("foldername: %s", foldername)
 	os.MkdirAll(foldername, 0755)
 
+	log.Tracef("fpath %s", fpath)
 	f, err := os.OpenFile(fpath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return
