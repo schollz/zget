@@ -280,6 +280,7 @@ func downloadfromfile(fname string) (err error) {
 		progressbar.OptionShowCount(),
 		progressbar.OptionOnCompletion(func() { fmt.Println(" ") }),
 		progressbar.OptionSetWidth(10),
+		progressbar.OptionThrottle(100*time.Millisecond),
 	)
 	for scanner.Scan() {
 		bar.Add(1)
@@ -395,6 +396,7 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 			progressbar.OptionSetDescription(fpath),
 			progressbar.OptionOnCompletion(func() { fmt.Println(" ") }),
 			progressbar.OptionSetWidth(10),
+			progressbar.OptionThrottle(100*time.Millisecond),
 		)
 		defer func() {
 			bar.Finish()
