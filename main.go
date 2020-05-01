@@ -383,6 +383,7 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 			int(resp.ContentLength),
 			progressbar.OptionSetWriter(os.Stderr),
 			progressbar.OptionShowBytes(true),
+			progressbar.OptionShowCount(),
 			progressbar.OptionSetDescription(fpath),
 			progressbar.OptionOnCompletion(func() { fmt.Println(" ") }),
 			progressbar.OptionSetWidth(10),
