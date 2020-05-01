@@ -174,7 +174,7 @@ func run() (err error) {
 	} else if flagDownloadSite {
 		err = downloadSite(flag.Args()[0])
 	} else {
-		_, _, err = download(flag.Args()[0], true, false)
+		_, _, _, err = download(flag.Args()[0], true, false)
 	}
 
 	return
@@ -208,7 +208,7 @@ func downloadSite(u string) (err error) {
 		for _, utodo := range linkstodo {
 			pagesDone[utodo] = struct{}{}
 			var fpath string
-			_, fpath, err = download(utodo, false, true)
+			_, fpath, _, err = download(utodo, false, true)
 			if err != nil {
 				return
 			}
@@ -232,6 +232,8 @@ func downloadSite(u string) (err error) {
 func downloadfromfile(fname string) (err error) {
 	urlschan := make(chan string)
 	done := make(chan bool)
+	numDownloaded := 0
+	bytesDownloaded := int64(0)
 	var wg sync.WaitGroup
 	wg.Add(flagWorkers)
 	for i := 0; i < flagWorkers; i++ {
@@ -244,7 +246,11 @@ func downloadfromfile(fname string) (err error) {
 					log.Trace("exiting worker")
 					return
 				case u := <-urlschan:
-					_, _, err = download(u, false, true)
+					_, _, numBytesDownloaded, err := download(u, false, true)
+					if numBytesDownloaded > 0 {
+						numDownloaded++
+					}
+					bytesDownloaded += numBytesDownloaded
 					if err != nil {
 						log.Error(err)
 					}
@@ -291,10 +297,12 @@ func downloadfromfile(fname string) (err error) {
 		done <- true
 	}
 	wg.Wait()
+
+	fmt.Fprintf(os.Stderr, "Downloaded %d URLs (%s)\n", numDownloaded, utils.HumanizeBytes(float64(bytesDownloaded)))
 	return
 }
 
-func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath string, err error) {
+func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath string, nBytesDownloaded int64, err error) {
 	if justone {
 		spin = spinner.New(spinner.CharSets[24], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
 		spin.Suffix = " connecting..."
@@ -405,7 +413,7 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 		writers = append(writers, f)
 	}
 	dest := io.MultiWriter(writers...)
-	_, err = io.Copy(dest, resp.Body)
+	nBytesDownloaded, err = io.Copy(dest, resp.Body)
 	f.Close()
 	if err != nil {
 		return

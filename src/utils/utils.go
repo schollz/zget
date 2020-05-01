@@ -1,11 +1,34 @@
 package utils
 
 import (
+	"fmt"
+	"math"
 	"net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/purell"
 )
+
+func HumanizeBytes(s float64) string {
+	sizes := []string{" B", " kB", " MB", " GB", " TB", " PB", " EB"}
+	base := 1000.0
+	if s < 10 {
+		return fmt.Sprintf("%2.0f B", s)
+	}
+	e := math.Floor(logn(float64(s), base))
+	suffix := sizes[int(e)]
+	val := math.Floor(float64(s)/math.Pow(base, e)*10+0.5) / 10
+	f := "%.0f%s"
+	if val < 10 {
+		f = "%.1f%s"
+	}
+
+	return fmt.Sprintf(f, val, suffix)
+}
+
+func logn(n, b float64) float64 {
+	return math.Log(n) / math.Log(b)
+}
 
 func FixURL(uri string, sourceuri string) (u *url.URL, err error) {
 	if !strings.Contains(sourceuri, "http") {
