@@ -38,7 +38,7 @@ var flagCompressed, flagVerbose, flagNoClobber, flagStdout, flagUseTor, flagDoSt
 var flagStripScript, flagStripStyle bool
 var flagList, flagOutfile string
 var flagHeaders arrayFlags
-var Version = "v1.1.5-c968160"
+var Version = "v1.1.5-8a0155d"
 var showTorIP bool
 var spin *spinner.Spinner
 var hpool *httppool.HTTPPool
