@@ -273,14 +273,8 @@ func downloadfromfile(fname string) (err error) {
 	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
-	bar := progressbar.NewOptions(
-		numLines,
-		progressbar.OptionSetWriter(os.Stderr),
-		progressbar.OptionShowIts(),
-		progressbar.OptionShowCount(),
-		progressbar.OptionOnCompletion(func() { fmt.Println(" ") }),
-		progressbar.OptionSetWidth(10),
-		progressbar.OptionThrottle(100*time.Millisecond),
+	bar := progressbar.Default(
+		int64(numLines),
 	)
 	for scanner.Scan() {
 		bar.Add(1)
@@ -388,15 +382,9 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 
 	var bar *progressbar.ProgressBar
 	if justone && !flagStdout {
-		bar = progressbar.NewOptions(
-			int(resp.ContentLength),
-			progressbar.OptionSetWriter(os.Stderr),
-			progressbar.OptionShowBytes(true),
-			progressbar.OptionShowCount(),
-			progressbar.OptionSetDescription(fpath),
-			progressbar.OptionOnCompletion(func() { fmt.Println(" ") }),
-			progressbar.OptionSetWidth(10),
-			progressbar.OptionThrottle(100*time.Millisecond),
+		bar = progressbar.DefaultBytes(
+			resp.ContentLength,
+			fpath,
 		)
 		defer func() {
 			bar.Finish()
