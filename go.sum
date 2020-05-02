@@ -248,8 +248,8 @@ github.com/schollz/httppool v0.0.1 h1:Vyb4JBTR8oTuyl8FvSr09iwoeU0b1zFcEj98VXJeR4
 github.com/schollz/httppool v0.0.1/go.mod h1:wHiwczPHfXTPASFBxuTDpRFoOjZHD2SDFtVR1xaSMJs=
 github.com/schollz/logger v1.2.0 h1:5WXfINRs3lEUTCZ7YXhj0uN+qukjizvITLm3Ca2m0Ho=
 github.com/schollz/logger v1.2.0/go.mod h1:P6F4/dGMGcx8wh+kG1zrNEd4vnNpEBY/mwEMd/vn6AM=
-github.com/schollz/progressbar/v3 v3.3.0 h1:kDjhVYhhLZ4/EkPnW6PTBOzDue5mI43BtNolO2ULchE=
-github.com/schollz/progressbar/v3 v3.3.0/go.mod h1:5l7+dbzsFKGBqc9WD982QzMSgQxhxrLxW6VcDuuzC3k=
+github.com/schollz/progressbar/v3 v3.3.1 h1:6xB8sxX6FiFxWcbKCFbcHKdDTXFOlDgQSChm8v4M944=
+github.com/schollz/progressbar/v3 v3.3.1/go.mod h1:5l7+dbzsFKGBqc9WD982QzMSgQxhxrLxW6VcDuuzC3k=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v0.0.0-20190215210624-980c5ac6f3ac/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
