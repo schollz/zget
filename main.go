@@ -34,7 +34,7 @@ import (
 )
 
 var flagWorkers int
-var flagCompressed, flagVerbose, flagNoClobber, flagStdout, flagUseTor, flagDoStat, flagVersion, flagGzip, flagDownloadSite bool
+var flagCompressed, flagVerbose, flagNoClobber, flagStdout, flagUseTor, flagDoStat, flagVersion, flagGzip, flagDownloadSite, flagDownloadSiteAll bool
 var flagStripScript, flagStripStyle bool
 var flagList, flagOutfile string
 var flagHeaders arrayFlags
@@ -58,7 +58,8 @@ func init() {
 	flag.Var(&flagHeaders, "H", "Pass custom header(s) to server")
 	flag.BoolVar(&flagStripScript, "rm-script", false, "Remove script tags from downloaded HTML")
 	flag.BoolVar(&flagStripStyle, "rm-style", false, "Remove style tags from download HTML")
-	flag.BoolVar(&flagDownloadSite, "site", false, "Download entire website")
+	flag.BoolVar(&flagDownloadSiteAll, "site-all", false, "Download entire website and assets")
+	flag.BoolVar(&flagDownloadSite, "site", false, "Download one website with assets")
 }
 
 func main() {
@@ -76,6 +77,10 @@ USAGE:
 
   Download a list of webpages, ignoring already downloaded:
     zget -nc -i urls.txt
+
+  Download an entire site for uploading to IPFS:
+    zget -w 10 --site-all -o $(date +%F) schollz.com \
+      ipfs add -r $(date +%F) 
 
 VERSION:
   `+Version+`
@@ -172,15 +177,33 @@ func run() (err error) {
 	if flagList != "" {
 		err = downloadfromfile(flagList)
 	} else if flagDownloadSite {
-		err = downloadSite(flag.Args()[0])
+		err = downloadSite(flag.Args()[0], 2)
+	} else if flagDownloadSiteAll {
+		err = downloadSite(flag.Args()[0], 200)
 	} else {
-		_, _, _, err = download(flag.Args()[0], true, false)
+		_, _, _, _, err = download(flag.Args()[0], true, false)
 	}
 
 	return
 }
 
-func downloadSite(u string) (err error) {
+func downloadSite(u string, depth int) (err error) {
+	log.Trace(flagOutfile)
+	if flagOutfile != "" {
+		err = os.Chdir(flagOutfile)
+		if err != nil {
+			err = os.MkdirAll(flagOutfile, os.ModePerm)
+			if err != nil {
+				return
+			}
+			err = os.Chdir(flagOutfile)
+			if err != nil {
+				return
+			}
+		}
+	}
+	flagOutfile = ""
+
 	flagNoClobber = true
 	pagesToDo := make(map[string]struct{})
 	pagesDone := make(map[string]struct{})
@@ -191,8 +214,14 @@ func downloadSite(u string) (err error) {
 	}
 	pagesToDo[uparsed.String()] = struct{}{}
 
+	log.Trace(depth)
 	bar := progressbar.Default(1, "downloading "+uparsed.Host)
+	iterations := -1
 	for {
+		iterations++
+		if iterations == depth {
+			break
+		}
 		linkstodo := make([]string, len(pagesToDo))
 		i := 0
 		for l := range pagesToDo {
@@ -226,11 +255,18 @@ func downloadSite(u string) (err error) {
 					var r result
 					r.u = j.u
 					var fpath string
-					_, fpath, _, r.err = download(r.u, false, true)
-					if r.err == nil {
-						r.newlinks, r.err = links.FromFile(fpath, uparsed.String(), true)
-						if err != nil {
-							r.newlinks, r.err = links.FromFile(path.Join(fpath, "index.html"), uparsed.String(), true)
+					var ishtml bool
+					_, fpath, _, ishtml, r.err = download(r.u, false, true)
+					if r.err == nil && ishtml {
+						var u2parsed *url.URL
+						u2parsed, r.err = utils.ParseURL(r.u)
+						if r.err == nil {
+							if r.err == nil {
+								r.newlinks, r.err = links.FromFile(fpath, u2parsed.String(), true)
+								if err != nil {
+									r.newlinks, r.err = links.FromFile(path.Join(fpath, "index.html"), uparsed.String(), true)
+								}
+							}
 						}
 					}
 					results <- r
@@ -274,7 +310,7 @@ func downloadfromfile(fname string) (err error) {
 					log.Trace("exiting worker")
 					return
 				case u := <-urlschan:
-					_, _, numBytesDownloaded, err := download(u, false, true)
+					_, _, numBytesDownloaded, _, err := download(u, false, true)
 					if numBytesDownloaded > 0 {
 						numDownloaded++
 					}
@@ -325,7 +361,7 @@ func downloadfromfile(fname string) (err error) {
 	return
 }
 
-func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath string, nBytesDownloaded int64, err error) {
+func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath string, nBytesDownloaded int64, ishtml bool, err error) {
 	if justone {
 		spin = spinner.New(spinner.CharSets[24], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
 		spin.Suffix = " connecting..."
@@ -438,7 +474,8 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 	}
 
 	// post processing`
-	if !flagGzip && strings.Contains(resp.Header.Get("Content-Type"), "html") {
+	ishtml = strings.Contains(resp.Header.Get("Content-Type"), "html")
+	if !flagGzip && ishtml {
 		splicer.StripHTML(fpath, flagStripScript, flagStripStyle)
 	}
 	return

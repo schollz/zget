@@ -19,4 +19,8 @@ func TestU(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "https://schollz.com/a/something.jpg", u.String())
 
+	u, err = FixURL("../blog/", "schollz.com/a")
+	assert.Nil(t, err)
+	assert.Equal(t, "https://schollz.com/blog/", u.String())
+
 }

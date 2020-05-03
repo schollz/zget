@@ -18,7 +18,7 @@ func relativeURL(u1 *url.URL, u2 *url.URL) (relativeU string) {
 	}
 
 	u1len := len(strings.Split(strings.TrimSuffix(strings.TrimPrefix(u1.Path, "/"), "/"), "/"))
-	relativeU = strings.Repeat("../", u1len) + strings.TrimPrefix(u2.Path, "/")
+	relativeU = strings.Repeat("../", u1len+1) + strings.TrimPrefix(u2.String(), u2.Scheme+"://")
 	return
 }
 
@@ -49,10 +49,8 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			log.Debug(errL)
 			return
 		}
-		if u.Host == uhost.Host {
-			links = append(links, u.String())
-			s.SetAttr("href", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
-		}
+		links = append(links, u.String())
+		s.SetAttr("href", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 	})
 
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {
@@ -65,11 +63,8 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			log.Debug(errL)
 			return
 		}
-		if u.Host == uhost.Host {
-			links = append(links, u.String())
-			s.SetAttr("src", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
-
-		}
+		links = append(links, u.String())
+		s.SetAttr("src", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 	})
 
 	doc.Find("script").Each(func(i int, s *goquery.Selection) {
@@ -82,10 +77,8 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			log.Debug(errL)
 			return
 		}
-		if u.Host == uhost.Host {
-			links = append(links, u.String())
-			s.SetAttr("src", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
-		}
+		links = append(links, u.String())
+		s.SetAttr("src", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 	})
 
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {

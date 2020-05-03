@@ -42,15 +42,15 @@ func FixURL(uri string, sourceuri string) (u *url.URL, err error) {
 		return
 	}
 
-	if strings.HasPrefix(uri, "/") {
+	if strings.HasPrefix(uri, "http") {
+		// don't do anything
+	} else if strings.HasPrefix(uri, "/") {
 		uri = sourceu.Scheme + "://" + sourceu.Host + "/" + uri
-	} else if strings.HasPrefix(uri, "./") {
-		uri = sourceu.String() + "/" + uri
-	} else if !strings.HasPrefix(uri, "http") {
-		uri = sourceu.String() + "/" + uri
+	} else {
+		uri = strings.TrimSuffix(sourceu.String(), "/") + "/" + uri
 	}
 
-	u, err = ParseURL(purell.MustNormalizeURLString(uri, purell.FlagsUsuallySafeGreedy|purell.FlagRemoveDuplicateSlashes))
+	u, err = ParseURL(purell.MustNormalizeURLString(uri, purell.FlagRemoveDotSegments|purell.FlagRemoveDuplicateSlashes))
 	if err != nil {
 		return
 	}
