@@ -19,6 +19,8 @@ require (
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
+	github.com/rs/zerolog v1.18.0
+	github.com/rylio/ytdl v0.6.3-0.20200330092806-e979337a42fc
 	github.com/schollz/httppool v0.0.1
 	github.com/schollz/logger v1.2.0
 	github.com/schollz/progressbar/v3 v3.3.1
