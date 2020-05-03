@@ -50,7 +50,7 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			return
 		}
 		if u.Host == uhost.Host {
-			links = append(links, relativeURL(uhost, u))
+			links = append(links, u.String())
 			s.SetAttr("href", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 		}
 	})
@@ -66,7 +66,7 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			return
 		}
 		if u.Host == uhost.Host {
-			links = append(links, relativeURL(uhost, u))
+			links = append(links, u.String())
 			s.SetAttr("src", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 
 		}
@@ -83,7 +83,7 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			return
 		}
 		if u.Host == uhost.Host {
-			links = append(links, relativeURL(uhost, u))
+			links = append(links, u.String())
 			s.SetAttr("src", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 		}
 	})
@@ -99,7 +99,7 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			return
 		}
 		if u.Host == uhost.Host {
-			links = append(links, relativeURL(uhost, u))
+			links = append(links, u.String())
 			s.SetAttr("href", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 		}
 	})
