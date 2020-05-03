@@ -16,5 +16,5 @@ func TestFindLinks(t *testing.T) {
 	assert.Nil(t, err)
 	fmt.Println(links)
 	b, _ := ioutil.ReadFile("index.html")
-	assert.Equal(t, `<html><head></head><body><a href="/blog">blog</a><a href="/blog/worker-pool/static/image.jpg">image</a></body></html>`, string(b))
+	assert.Equal(t, `<html><head></head><body><a href="../../blog">blog</a><a href="../../blog/worker-pool/static/image.jpg">image</a></body></html>`, string(b))
 }

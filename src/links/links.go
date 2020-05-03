@@ -3,12 +3,24 @@ package links
 import (
 	"bytes"
 	"io/ioutil"
+	"net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/schollz/logger"
 	"github.com/schollz/zget/src/utils"
 )
+
+func relativeURL(u1 *url.URL, u2 *url.URL) (relativeU string) {
+	if u1.Path == "/" {
+		relativeU = "." + u2.Path
+		return
+	}
+
+	u1len := len(strings.Split(strings.TrimSuffix(strings.TrimPrefix(u1.Path, "/"), "/"), "/"))
+	relativeU = strings.Repeat("../", u1len) + strings.TrimPrefix(u2.Path, "/")
+	return
+}
 
 // FromFile retrieves, parses, and validates all links for given host
 func FromFile(fname string, host string, rewrite bool) (links []string, err error) {
@@ -38,8 +50,8 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			return
 		}
 		if u.Host == uhost.Host {
-			links = append(links, u.String())
-			s.SetAttr("href", strings.TrimPrefix(u.String(), uhost.Scheme+"://"+uhost.Host))
+			links = append(links, relativeURL(uhost, u))
+			s.SetAttr("href", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 		}
 	})
 
@@ -54,8 +66,8 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			return
 		}
 		if u.Host == uhost.Host {
-			links = append(links, u.String())
-			s.SetAttr("src", strings.TrimPrefix(u.String(), uhost.Scheme+"://"+uhost.Host))
+			links = append(links, relativeURL(uhost, u))
+			s.SetAttr("src", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 
 		}
 	})
@@ -71,8 +83,8 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			return
 		}
 		if u.Host == uhost.Host {
-			links = append(links, u.String())
-			s.SetAttr("src", strings.TrimPrefix(u.String(), uhost.Scheme+"://"+uhost.Host))
+			links = append(links, relativeURL(uhost, u))
+			s.SetAttr("src", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 		}
 	})
 
@@ -87,8 +99,8 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			return
 		}
 		if u.Host == uhost.Host {
-			links = append(links, u.String())
-			s.SetAttr("href", strings.TrimPrefix(u.String(), uhost.Scheme+"://"+uhost.Host))
+			links = append(links, relativeURL(uhost, u))
+			s.SetAttr("href", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 		}
 	})
 

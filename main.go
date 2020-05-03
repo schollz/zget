@@ -191,6 +191,7 @@ func downloadSite(u string) (err error) {
 	}
 	pagesToDo[uparsed.String()] = struct{}{}
 
+	bar := progressbar.Default(1, "downloading "+uparsed.Host)
 	for {
 		linkstodo := make([]string, len(pagesToDo))
 		i := 0
@@ -204,26 +205,53 @@ func downloadSite(u string) (err error) {
 			break
 		}
 		linkstodo = linkstodo[:i]
+		bar.ChangeMax(bar.GetMax() + len(linkstodo))
+
+		var numJobs = len(linkstodo)
+		type job struct {
+			u string
+		}
+		type result struct {
+			u        string
+			newlinks []string
+			err      error
+		}
+
+		jobs := make(chan job, numJobs)
+		results := make(chan result, numJobs)
+		runtime.GOMAXPROCS(runtime.NumCPU())
+		for i := 0; i < flagWorkers; i++ {
+			go func(jobs <-chan job, results chan<- result) {
+				for j := range jobs {
+					var r result
+					r.u = j.u
+					var fpath string
+					_, fpath, _, r.err = download(r.u, false, true)
+					if r.err == nil {
+						r.newlinks, r.err = links.FromFile(fpath, uparsed.String(), true)
+						if err != nil {
+							r.newlinks, r.err = links.FromFile(path.Join(fpath, "index.html"), uparsed.String(), true)
+						}
+					}
+					results <- r
+				}
+			}(jobs, results)
+		}
 
 		for _, utodo := range linkstodo {
-			pagesDone[utodo] = struct{}{}
-			var fpath string
-			_, fpath, _, err = download(utodo, false, true)
-			if err != nil {
-				return
-			}
-			var newlinks []string
-			newlinks, err = links.FromFile(fpath, uparsed.String(), true)
-			if err != nil {
-				newlinks, err = links.FromFile(path.Join(fpath, "index.html"), uparsed.String(), true)
-				if err != nil {
-					continue
-				}
-			}
-			for _, newlink := range newlinks {
+			jobs <- job{utodo}
+		}
+		close(jobs)
+
+		for i := 0; i < numJobs; i++ {
+			r := <-results
+			bar.Add(1)
+			pagesDone[r.u] = struct{}{}
+			for _, newlink := range r.newlinks {
 				pagesToDo[newlink] = struct{}{}
 			}
 		}
+
 	}
 
 	return
