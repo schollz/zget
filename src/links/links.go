@@ -105,5 +105,15 @@ func FromFile(fname string, host string, rewrite bool, assetsOnly bool) (links [
 		}
 		err = ioutil.WriteFile(fname, []byte(html), 0644)
 	}
+
+	i := 0
+	for _, link := range links {
+		if strings.Contains(link, "javascript:") {
+			continue
+		}
+		links[i] = link
+		i++
+	}
+	links = links[:i]
 	return
 }
