@@ -17,6 +17,8 @@ I've been adding features that aren't part of `curl` or `wget`, here are some of
 - [x] Strip out style tags and/or script tags with `--rm-script/--rm-style` flag
 - [x] Support to download magnet links 
 - [x] Incorporates [httpstat](https://github.com/davecheney/httpstat) with `-stat` flag.
+- [x] Download archive of website with `--site`
+- [x] Download entire domain of website with `--site-all`
 
 # License 
 
