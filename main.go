@@ -79,8 +79,8 @@ USAGE:
     zget -nc -i urls.txt
 
   Download an entire site for uploading to IPFS:
-    zget -w 10 --site-all -o $(date +%F) schollz.com \
-      ipfs add -r $(date +%F) 
+    zget -w 10 --site-all -o $(date +%%F) schollz.com \
+      ipfs add -r $(date +%%F) 
 
 VERSION:
   `+Version+`
@@ -262,9 +262,9 @@ func downloadSite(u string, depth int) (err error) {
 						u2parsed, r.err = utils.ParseURL(r.u)
 						if r.err == nil {
 							if r.err == nil {
-								r.newlinks, r.err = links.FromFile(fpath, u2parsed.String(), true)
+								r.newlinks, r.err = links.FromFile(fpath, u2parsed.String(), true, depth <= 3)
 								if err != nil {
-									r.newlinks, r.err = links.FromFile(path.Join(fpath, "index.html"), uparsed.String(), true)
+									r.newlinks, r.err = links.FromFile(path.Join(fpath, "index.html"), uparsed.String(), true, depth <= 3)
 								}
 							}
 						}
@@ -429,7 +429,7 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 	defer resp.Body.Close()
 
 	log.Tracef("Content-Type: %s", resp.Header.Get("Content-Type"))
-	if indexhtml && strings.Contains(resp.Header.Get("Content-Type"), "html") && !strings.HasSuffix(fpath, "index.html") {
+	if indexhtml && strings.Contains(resp.Header.Get("Content-Type"), "html") && !strings.HasSuffix(fpath, ".html") && !strings.HasSuffix(fpath, ".htm") && !strings.HasSuffix(fpath, ".php") && !strings.HasSuffix(fpath, ".asp") {
 		fpath = path.Join(fpath, "index.html")
 	}
 	foldername, _ := filepath.Split(fpath)

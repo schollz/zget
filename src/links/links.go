@@ -23,7 +23,7 @@ func relativeURL(u1 *url.URL, u2 *url.URL) (relativeU string) {
 }
 
 // FromFile retrieves, parses, and validates all links for given host
-func FromFile(fname string, host string, rewrite bool) (links []string, err error) {
+func FromFile(fname string, host string, rewrite bool, assetsOnly bool) (links []string, err error) {
 	b, err := ioutil.ReadFile(fname)
 	if err != nil {
 		return
@@ -91,7 +91,7 @@ func FromFile(fname string, host string, rewrite bool) (links []string, err erro
 			log.Debug(errL)
 			return
 		}
-		if u.Host == uhost.Host {
+		if u.Host == uhost.Host && !assetsOnly {
 			links = append(links, u.String())
 			s.SetAttr("href", strings.TrimPrefix(relativeURL(uhost, u), uhost.Scheme+"://"+uhost.Host))
 		}
