@@ -23,7 +23,7 @@ require (
 	github.com/rylio/ytdl v0.6.3-0.20200330092806-e979337a42fc
 	github.com/schollz/httppool v0.0.1
 	github.com/schollz/logger v1.2.0
-	github.com/schollz/progressbar/v3 v3.3.1
+	github.com/schollz/progressbar/v3 v3.3.3
 	github.com/stretchr/testify v1.4.0
 	github.com/tdewolff/minify v2.3.6+incompatible
 	github.com/tdewolff/parse v2.3.4+incompatible // indirect

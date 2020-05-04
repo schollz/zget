@@ -407,15 +407,17 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 			}
 		}
 	}
-	if flagGzip {
-		fpath += ".gz"
-	}
 
 	resp, err := hpool.Get(uget)
 	if err != nil {
 		log.Trace(err)
 		return
 	}
+
+	if flagGzip {
+		fpath += ".gz"
+	}
+
 	if justone {
 		spin.Stop()
 		if !showTorIP && flagUseTor {
