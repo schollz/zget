@@ -216,6 +216,7 @@ func downloadSite(u string, depth int) (err error) {
 
 	log.Trace(depth)
 	bar := progressbar.Default(1, "downloading "+uparsed.Host)
+	bar.RenderBlank()
 	iterations := -1
 	for {
 		iterations++
@@ -340,6 +341,7 @@ func downloadfromfile(fname string) (err error) {
 	bar := progressbar.Default(
 		int64(numLines),
 	)
+	bar.RenderBlank()
 	for scanner.Scan() {
 		bar.Add(1)
 		u := strings.TrimSpace(scanner.Text())
@@ -413,7 +415,11 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 		log.Trace(err)
 		return
 	}
-
+	log.Tracef("resp: %+v", resp)
+	if resp.StatusCode > 400 {
+		err = fmt.Errorf(resp.Status)
+		return
+	}
 	if flagGzip {
 		fpath += ".gz"
 	}
@@ -452,6 +458,7 @@ func download(urlInput string, justone bool, indexhtml bool) (uget string, fpath
 			resp.ContentLength,
 			fpath,
 		)
+		bar.RenderBlank()
 		defer func() {
 			bar.Finish()
 		}()
