@@ -63,6 +63,11 @@ func init() {
 }
 
 func main() {
+	fmt.Println("running")
+}
+
+func main2() {
+	fmt.Println("running")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `zget - like wget, but customized for zack
 https://github.com/schollz/zget

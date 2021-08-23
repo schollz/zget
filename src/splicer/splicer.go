@@ -2,6 +2,7 @@ package splicer
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/PuerkitoBio/goquery"
@@ -12,6 +13,7 @@ import (
 var m *minify.M
 
 func init() {
+	fmt.Println("init")
 	m = minify.New()
 	m.Add("text/html", &html.Minifier{
 		KeepDefaultAttrVals: true,
