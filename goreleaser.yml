@@ -64,19 +64,6 @@ archives:
       - README.md
       - LICENSE
 
-brews:
-  -
-    github:
-      owner: schollz
-      name: homebrew-tap
-    folder: Formula
-    description: "zget is a tool that allows any two computers to simply and securely transfer files and folders."
-    homepage: "https://schollz.com/software/zget/"
-    install: |
-      bin.install "zget"
-
-    test: |
-      system "#{bin}/zget --version"
 
 scoop:
   bucket:
