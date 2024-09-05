@@ -1,0 +1,23 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    name: Go unit tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.23.0'
+    - run: go version
+    - run: |
+        CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags '-extldflags "-static" -X "main.Version=${{ github.event.release.name }}"' -o zget_windows_amd64
+        CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -ldflags '-extldflags "-static" -X "main.Version=${{ github.event.release.name }}"' -o zget_linux_arm
+        CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags '-extldflags "-static" -X "main.Version=${{ github.event.release.name }}"' -o zget_linux_arm64
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-extldflags "-static" -X "main.Version=${{ github.event.release.name }}"' -o zget_linux_amd64
+        ./zget_linux_amd64 --version

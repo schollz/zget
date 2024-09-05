@@ -62,7 +62,6 @@ func init() {
 	flag.BoolVar(&flagDownloadSite, "site", false, "Download one website with assets")
 }
 
-
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `zget - like wget, but customized for zack

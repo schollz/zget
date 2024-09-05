@@ -1,0 +1,44 @@
+name: Make release
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout project
+      uses: actions/checkout@v4
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23.0'
+    - name: Build files
+      run: |
+        CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags '-extldflags "-static" -X "main.Version=${{ github.event.release.name }}"' -o zget.exe
+        CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -ldflags '-extldflags "-static" -X "main.Version=${{ github.event.release.name }}"' -o zget_linux_arm
+        CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags '-extldflags "-static" -X "main.Version=${{ github.event.release.name }}"' -o zget_linux_arm64
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-extldflags "-static" -X "main.Version=${{ github.event.release.name }}"' -o zget_linux_amd64
+        ./zget_linux_amd64 --version
+    - name: Create checksums.txt
+      run: |
+        touch zget_${{ github.event.release.name }}_checksums.txt
+        sha256sum zget.exe >> zget_${{ github.event.release.name }}_checksums.txt
+        sha256sum zget_linux_arm >> zget_${{ github.event.release.name }}_checksums.txt
+        sha256sum zget_linux_arm64 >> zget_${{ github.event.release.name }}_checksums.txt
+        sha256sum zget_linux_amd64 >> zget_${{ github.event.release.name }}_checksums.txt
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          zget_${{ github.event.release.name }}_checksums.txt
+          zget.exe
+          zget_linux_arm
+          zget_linux_arm64
+          zget_linux_amd64
+          
